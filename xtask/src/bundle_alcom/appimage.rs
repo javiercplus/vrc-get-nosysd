@@ -1,4 +1,4 @@
-use super::{BundleContext, create_tar_gz};
+use super::{create_tar_gz, BundleContext};
 use crate::bundle_alcom::linux::*;
 use crate::utils;
 use crate::utils::command::CommandExt;
@@ -271,9 +271,9 @@ mod list_deps {
     use crate::utils;
     use anyhow::Context;
     use itertools::Itertools;
-    use object::Endianness;
     use object::elf::DT_NEEDED;
     use object::read::elf::ElfFile64;
+    use object::Endianness;
     use std::borrow::Borrow;
     use std::collections::{HashMap, HashSet, VecDeque};
     use std::hash::Hash;
@@ -347,7 +347,6 @@ mod list_deps {
         "libnghttp2-14",
         "libpsl5",
         "libsqlite3-0",
-        "libsystemd0",
         "libtasn1-6",
         "libwayland-client0",
         "libwayland-server0",
@@ -406,21 +405,19 @@ mod list_deps {
         }
         let mut visited = HashSet::new();
 
-        std::iter::from_fn(move || {
-            loop {
-                let front = queue.pop_front()?;
-                if !visited.insert(front) {
-                    continue;
-                }
-                if let Some(x) = deps.get(front) {
-                    for depends in &x.depends {
-                        if let [single] = depends.as_slice() {
-                            queue.push_back(single);
-                        }
+        std::iter::from_fn(move || loop {
+            let front = queue.pop_front()?;
+            if !visited.insert(front) {
+                continue;
+            }
+            if let Some(x) = deps.get(front) {
+                for depends in &x.depends {
+                    if let [single] = depends.as_slice() {
+                        queue.push_back(single);
                     }
                 }
-                return Some(front);
             }
+            return Some(front);
         })
     }
 
